@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'screens/weather/widgets/weather_screen.dart';
 
 // අනෙක් අයගේ Screen files මෙතනට import කරන්න
 // දැනට මේවා comment කර ඇත්තේ files නොමැති නම් error එකක් එන බැවිනි
 // import 'screens/diagnose/diagnose_home.dart';
 // import 'screens/market/market_home.dart';
 // import 'screens/crops/crops_home.dart';
-// import 'screens/weather/weather_home.dart';
 // import 'screens/forum/forum_home.dart';
 // import 'screens/profile/profile_home.dart';
 
@@ -102,19 +102,24 @@ class _FarmerHomePageState extends State<FarmerHomePage> {
       ),
       const Center(
         child: Text("Diagnose Screen (Member 2)"),
-      ), // පසුව DiagnoseHome() ලෙස වෙනස් කරන්න
+      ),
       const Center(
         child: Text("Market Screen (Member 3)"),
-      ), // පසුව MarketHome() ලෙස වෙනස් කරන්න
+      ),
       const Center(child: Text("Crops Screen (Member 4)")),
-      const Center(child: Text("Weather Screen (Member 5)")),
+      const WeatherScreen(),
       const Center(child: Text("Forum Screen (Member 6)")),
       const Center(child: Text("Profile Screen (Member 7)")),
     ];
 
+    // Weather tab active නම් AppBar hide කරන්න (WeatherScreen එකේ තමන්ගේම AppBar තියෙනවා)
+    final bool isWeatherTab = _selectedIndex == 4;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F5),
-      appBar: AppBar(
+      appBar: isWeatherTab
+          ? null
+          : AppBar(
         backgroundColor: const Color(0xFF1B5E20),
         title: Row(
           children: [
@@ -126,7 +131,7 @@ class _FarmerHomePageState extends State<FarmerHomePage> {
                 width: 35,
                 fit: BoxFit.cover,
                 errorBuilder: (c, e, s) =>
-                    const Icon(Icons.eco, color: Colors.white),
+                const Icon(Icons.eco, color: Colors.white),
               ),
             ),
             const SizedBox(width: 10),
@@ -141,7 +146,6 @@ class _FarmerHomePageState extends State<FarmerHomePage> {
           ],
         ),
         actions: [
-          // මෙහි logic එක මගින් ඕනෑම වෙලාවක භාෂාව මාරු කළ හැක
           TextButton(
             onPressed: () => setState(() => isSinhala = !isSinhala),
             child: Text(
@@ -157,16 +161,16 @@ class _FarmerHomePageState extends State<FarmerHomePage> {
       body: pages[_selectedIndex],
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton.extended(
-              onPressed: () {
-                print("Navigating to AI Chat...");
-              },
-              backgroundColor: const Color(0xFF1B5E20),
-              icon: const Icon(Icons.auto_awesome, color: Colors.white),
-              label: Text(
-                t('ask_ai'),
-                style: const TextStyle(color: Colors.white),
-              ),
-            )
+        onPressed: () {
+          debugPrint("Navigating to AI Chat...");
+        },
+        backgroundColor: const Color(0xFF1B5E20),
+        icon: const Icon(Icons.auto_awesome, color: Colors.white),
+        label: Text(
+          t('ask_ai'),
+          style: const TextStyle(color: Colors.white),
+        ),
+      )
           : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -246,12 +250,12 @@ class HomeContent extends StatelessWidget {
           ...notices
               .map(
                 (n) => _buildNoticeTile(
-                  n['title'],
-                  n['msg'],
-                  n['icon'],
-                  n['color'],
-                ),
-              )
+              n['title'],
+              n['msg'],
+              n['icon'],
+              n['color'],
+            ),
+          )
               .toList(),
           const SizedBox(height: 25),
           Text(
@@ -305,17 +309,17 @@ class HomeContent extends StatelessWidget {
   }
 
   Widget _buildNoticeTile(
-    String title,
-    String msg,
-    IconData icon,
-    Color color,
-  ) {
+      String title,
+      String msg,
+      IconData icon,
+      Color color,
+      ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withValues(alpha: 0.1),
           child: Icon(icon, color: color, size: 20),
         ),
         title: Text(
@@ -349,7 +353,7 @@ class HomeContent extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (index == 100) {
-          print("Ask AI tapped from Grid!");
+          debugPrint("Ask AI tapped from Grid!");
         } else {
           onFeatureTap(index);
         }
