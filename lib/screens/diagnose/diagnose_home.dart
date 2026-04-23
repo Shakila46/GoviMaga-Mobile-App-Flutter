@@ -37,7 +37,7 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
   final DiagnosisService _diagnosisService = DiagnosisService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Get API key from environment
+  // Get API key from environment - NO HARDCODED FALLBACK
   String get _apiKey => dotenv.env['GEMINI_API_KEY'] ?? '';
 
   @override
@@ -455,6 +455,35 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_apiKey.isEmpty) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF2F7F4),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.warning_amber_rounded, size: 64, color: Colors.orange),
+              const SizedBox(height: 16),
+              const Text(
+                'API Key Not Configured',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Please add GEMINI_API_KEY to .env file',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {},
+                child: const Text('Contact Support'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F7F4),
       body: SafeArea(
@@ -502,6 +531,7 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
+                      // Image Preview
                       _selectedImage != null
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(12),
@@ -538,6 +568,7 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                             ),
                       const SizedBox(height: 16),
 
+                      // Action Buttons
                       if (_selectedImage == null)
                         ElevatedButton.icon(
                           onPressed: _showImageSourceDialog,
@@ -553,80 +584,53 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                           ),
                         )
                       else
-                        Column(
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: _isLoading || _isSaving
-                                        ? null
-                                        : () => _analyzeImage(_selectedImage!),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: _isLoading
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : Text(_t('diagnoseBtn')),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isLoading || _isSaving
+                                    ? null
+                                    : () => _analyzeImage(_selectedImage!),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: _isLoading || _isSaving
-                                        ? null
-                                        : _cancelDiagnosis,
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.grey[700],
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: Text(_t('cancelBtn')),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (_isSaving) ...[
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const SizedBox(
-                                    height: 16,
-                                    width: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _t('saving'),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(_t('diagnoseBtn')),
                               ),
-                            ],
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _isLoading || _isSaving
+                                    ? null
+                                    : _cancelDiagnosis,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.grey[700],
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(_t('cancelBtn')),
+                              ),
+                            ),
                           ],
                         ),
                     ],
@@ -649,9 +653,11 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                   ),
                 ),
 
-              // Diagnosis Result (same as before)
+              // Diagnosis Result
               if (_diagnosisData != null && !_isLoading) ...[
                 const SizedBox(height: 20),
+
+                // Disease Info Card
                 Card(
                   elevation: 4,
                   shape: RoundedRectangleBorder(
@@ -708,9 +714,15 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(Icons.analytics, size: 16, color: Colors.green),
+                            const Icon(
+                              Icons.analytics,
+                              size: 16,
+                              color: Colors.green,
+                            ),
                             const SizedBox(width: 8),
-                            Text('${_t('confidence')}: ${_diagnosisData!['confidence'] ?? 0}%'),
+                            Text(
+                              '${_t('confidence')}: ${_diagnosisData!['confidence'] ?? 0}%',
+                            ),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -725,7 +737,10 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 16),
+
+                // Treatment Card
                 if (_diagnosisData!['treatments'] != null)
                   Card(
                     elevation: 4,
@@ -745,18 +760,26 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                                   color: Colors.orange[50],
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Icon(Icons.medical_services, color: Colors.orange[700]),
+                                child: Icon(
+                                  Icons.medical_services,
+                                  color: Colors.orange[700],
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Text(
                                 _t('treatment'),
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
                           ...List.generate(
-                            (_diagnosisData!['treatments'][widget.language] as List).length,
+                            (_diagnosisData!['treatments'][widget.language]
+                                    as List)
+                                .length,
                             (index) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: Row(
@@ -767,13 +790,18 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                                     backgroundColor: Colors.green[50],
                                     child: Text(
                                       '${index + 1}',
-                                      style: TextStyle(color: Colors.green[700], fontSize: 10),
+                                      style: TextStyle(
+                                        color: Colors.green[700],
+                                        fontSize: 10,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      _diagnosisData!['treatments'][widget.language][index].toString(),
+                                      _diagnosisData!['treatments'][widget
+                                              .language][index]
+                                          .toString(),
                                       style: const TextStyle(height: 1.4),
                                     ),
                                   ),
@@ -785,7 +813,10 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                       ),
                     ),
                   ),
+
                 const SizedBox(height: 16),
+
+                // Prevention Card
                 if (_diagnosisData!['preventions'] != null)
                   Card(
                     elevation: 4,
@@ -805,28 +836,42 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                                   color: Colors.blue[50],
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Icon(Icons.shield, color: Colors.blue[700]),
+                                child: Icon(
+                                  Icons.shield,
+                                  color: Colors.blue[700],
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Text(
                                 _t('prevention'),
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
                           ...List.generate(
-                            (_diagnosisData!['preventions'][widget.language] as List).length,
+                            (_diagnosisData!['preventions'][widget.language]
+                                    as List)
+                                .length,
                             (index) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(Icons.check_circle, color: Colors.green[400], size: 20),
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green[400],
+                                    size: 20,
+                                  ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      _diagnosisData!['preventions'][widget.language][index].toString(),
+                                      _diagnosisData!['preventions'][widget
+                                              .language][index]
+                                          .toString(),
                                       style: const TextStyle(height: 1.4),
                                     ),
                                   ),
@@ -848,7 +893,10 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                   children: [
                     Text(
                       _t('recentDiagnoses'),
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     TextButton.icon(
                       onPressed: _clearHistory,
@@ -887,6 +935,7 @@ class _DiseaseDiagnosisScreenState extends State<DiseaseDiagnosisScreen> {
                         setState(() {
                           _diagnosisData = data;
                         });
+                        // Scroll to top
                         Scrollable.ensureVisible(context);
                       },
                     ),

@@ -1,8 +1,14 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DefaultFirebaseOptions {
+  // Get API keys from .env file
+  static String get androidApiKey => dotenv.env['FIREBASE_ANDROID_API_KEY'] ?? '';
+  static String get iosApiKey => dotenv.env['FIREBASE_IOS_API_KEY'] ?? '';
+  static String get webApiKey => dotenv.env['FIREBASE_WEB_API_KEY'] ?? '';
+
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       return web;
@@ -27,8 +33,34 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAc0kG1uCdTdLtZrXSGYtBlhJ18PUxwwlY',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey: androidApiKey,
+    appId: '1:988783189852:android:183fe343a82ed9f611ab99',
+    messagingSenderId: '988783189852',
+    projectId: 'govimaga-862b8',
+    storageBucket: 'govimaga-862b8.firebasestorage.app',
+  );
+
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey: iosApiKey,
+    appId: '1:988783189852:ios:9d02bf12a6e8210911ab99',
+    messagingSenderId: '988783189852',
+    projectId: 'govimaga-862b8',
+    storageBucket: 'govimaga-862b8.firebasestorage.app',
+    iosBundleId: 'com.example.done',
+  );
+
+  static FirebaseOptions get macos => FirebaseOptions(
+    apiKey: iosApiKey,
+    appId: '1:988783189852:ios:9d02bf12a6e8210911ab99',
+    messagingSenderId: '988783189852',
+    projectId: 'govimaga-862b8',
+    storageBucket: 'govimaga-862b8.firebasestorage.app',
+    iosBundleId: 'com.example.done',
+  );
+
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: webApiKey,
     appId: '1:988783189852:web:76a360db2f83146e11ab99',
     messagingSenderId: '988783189852',
     projectId: 'govimaga-862b8',
@@ -37,34 +69,8 @@ class DefaultFirebaseOptions {
     measurementId: 'G-ZRYPR3TYN2',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDkbBikykFcOo-pJkWVQKDac6qKoyMQvnc',
-    appId: '1:988783189852:android:183fe343a82ed9f611ab99',
-    messagingSenderId: '988783189852',
-    projectId: 'govimaga-862b8',
-    storageBucket: 'govimaga-862b8.firebasestorage.app',
-  );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAo6U7uAkvrYOBSjeqrR8JZWUL93wRsI1A',
-    appId: '1:988783189852:ios:9d02bf12a6e8210911ab99',
-    messagingSenderId: '988783189852',
-    projectId: 'govimaga-862b8',
-    storageBucket: 'govimaga-862b8.firebasestorage.app',
-    iosBundleId: 'com.example.done',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAo6U7uAkvrYOBSjeqrR8JZWUL93wRsI1A',
-    appId: '1:988783189852:ios:9d02bf12a6e8210911ab99',
-    messagingSenderId: '988783189852',
-    projectId: 'govimaga-862b8',
-    storageBucket: 'govimaga-862b8.firebasestorage.app',
-    iosBundleId: 'com.example.done',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAc0kG1uCdTdLtZrXSGYtBlhJ18PUxwwlY',
+  static FirebaseOptions get windows => FirebaseOptions(
+    apiKey: webApiKey,
     appId: '1:988783189852:web:c692204ee0dcfb7011ab99',
     messagingSenderId: '988783189852',
     projectId: 'govimaga-862b8',
