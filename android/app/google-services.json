@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "988783189852",
+    "project_id": "govimaga-862b8",
+    "storage_bucket": "govimaga-862b8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:988783189852:android:183fe343a82ed9f611ab99",
+        "android_client_info": {
+          "package_name": "com.example.done"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdInNNW_YT04moByMleaDUyrwgVK54rvk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:988783189852:android:f915cd88dc5e38e611ab99",
+        "android_client_info": {
+          "package_name": "com.example.govimaga"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdInNNW_YT04moByMleaDUyrwgVK54rvk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:988783189852:android:b596d9702497f5c911ab99",
+        "android_client_info": {
+          "package_name": "com.example.weathermad"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdInNNW_YT04moByMleaDUyrwgVK54rvk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
