@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -30,11 +31,14 @@ class _WeatherScreenState extends State<WeatherScreen>
   String rainfall = "0.0";
   String weatherDescription = "";
   bool isLoading = true;
+  bool isRefreshing = false;
 
   List<dynamic> forecastList = [];
 
   late AnimationController _fadeController;
   late AnimationController _slideController;
+  late AnimationController _refreshController;
+
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
@@ -44,16 +48,22 @@ class _WeatherScreenState extends State<WeatherScreen>
         'fetching_data': 'Fetching your farm data...',
         'weather_advisory': 'Weather-Driven Crop Advisory',
         'loading': 'Loading...',
+        'your_location': 'Your Location',
+        'tap_refresh': 'Tap to refresh',
       },
       'SI': {
         'fetching_data': 'ඔබේ ගොවිපල දත්ත ලබා ගනිමින්...',
         'weather_advisory': 'කාලගුණය මත පදනම් වූ බෝග උපදෙස්',
         'loading': 'පූරණය වෙමින්...',
+        'your_location': 'ඔබේ ස්ථානය',
+        'tap_refresh': 'නැවුම් කිරීමට තට්ටු කරන්න',
       },
       'TA': {
         'fetching_data': 'உங்கள் பண்ணை தரவைப் பெறுகிறது...',
         'weather_advisory': 'வானிலை சார்ந்த பயிர் ஆலோசனை',
         'loading': 'ஏற்றுகிறது...',
+        'your_location': 'உங்கள் இடம்',
+        'tap_refresh': 'புதுப்பிக்க தட்டவும்',
       },
     };
     return translations[widget.language]?[key] ?? translations['EN']![key]!;
@@ -62,6 +72,7 @@ class _WeatherScreenState extends State<WeatherScreen>
   @override
   void initState() {
     super.initState();
+
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -70,6 +81,11 @@ class _WeatherScreenState extends State<WeatherScreen>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
+    _refreshController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeInOut,
@@ -127,11 +143,14 @@ class _WeatherScreenState extends State<WeatherScreen>
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
+    _refreshController.dispose();
     super.dispose();
   }
 
   Future<void> _getWeatherByLocation() async {
+    _refreshController.repeat();
     setState(() {
+      isRefreshing = true;
       isLoading = true;
       currentCity = "Locating...";
       temperature = "--";
@@ -147,7 +166,8 @@ class _WeatherScreenState extends State<WeatherScreen>
       if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please enable location services.')));
+            const SnackBar(content: Text('Please enable location services.')),
+          );
         }
         throw Exception('Location services are disabled.');
       }
@@ -158,16 +178,21 @@ class _WeatherScreenState extends State<WeatherScreen>
         if (permission == LocationPermission.denied) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Location permissions denied.')));
+              const SnackBar(content: Text('Location permissions denied.')),
+            );
           }
           throw Exception('Location permissions are denied');
         }
       }
       if (permission == LocationPermission.deniedForever) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
               content: Text(
-                  'Location permissions permanently denied. Enable in settings.')));
+                'Location permissions permanently denied. Enable in settings.',
+              ),
+            ),
+          );
         }
         throw Exception('Location permissions are permanently denied.');
       }
@@ -219,25 +244,34 @@ class _WeatherScreenState extends State<WeatherScreen>
           desc = weatherArr[0]['description']?.toString() ?? "";
         }
 
+        _refreshController.stop();
+        _refreshController.reset();
+
         setState(() {
           currentCity = currentData['name']?.toString() ?? "Unknown City";
           temperature = (currentData['main']?['temp'] ?? 0).round().toString();
           humidity = (currentData['main']?['humidity'] ?? 0).toString();
-          windSpeed =
-              ((currentData['wind']?['speed'] ?? 0) * 3.6).round().toString();
+          windSpeed = ((currentData['wind']?['speed'] ?? 0) * 3.6)
+              .round()
+              .toString();
           rainfall = rainVolume.toStringAsFixed(1);
           weatherDescription = _capitalize(desc);
           forecastList = dailyForecasts.take(5).toList();
           isLoading = false;
+          isRefreshing = false;
         });
+
         _fadeController.forward(from: 0);
         _slideController.forward(from: 0);
       } else {
         throw Exception('Failed to load weather data');
       }
     } catch (e) {
+      _refreshController.stop();
+      _refreshController.reset();
       setState(() {
         isLoading = false;
+        isRefreshing = false;
         currentCity = "Location Error";
       });
       debugPrint('Weather Error: $e');
@@ -253,138 +287,166 @@ class _WeatherScreenState extends State<WeatherScreen>
       child: isLoading
           ? _buildLoader()
           : FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          // *** Pull-to-refresh wrap  ***
-          child: RefreshIndicator(
-            onRefresh: _getWeatherByLocation,
-            color: AppColors.accent,
-            backgroundColor: AppColors.surface,
-            strokeWidth: 2.5,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(
-                // AlwaysScrollable
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                SliverToBoxAdapter(child: SizedBox(height: 12)),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-                    child: Column(
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 16),
-                        _buildLocationPill(),
-                        const SizedBox(height: 24),
-                        HeroWeatherCard(
-                          temperature: temperature,
-                          humidity: humidity,
-                          windSpeed: windSpeed,
-                          rainfall: rainfall,
-                          description: weatherDescription,
-                          language: widget.language,
-                        ),
-                        const SizedBox(height: 20),
-                        TodaysRecommendationsSection(
-                          temperature: temperature,
-                          humidity: humidity,
-                          windSpeed: windSpeed,
-                          language: widget.language,
-                        ),
-                        const SizedBox(height: 18),
-                        FarmingAlertsSection(
-                          temperature: temperature,
-                          humidity: humidity,
-                          windSpeed: windSpeed,
-                          forecastData: forecastList,
-                          language: widget.language,
-                        ),
-                        const SizedBox(height: 18),
-                        Forecast5DaySection(
-                          forecastData: forecastList,
-                          language: widget.language,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: RefreshIndicator(
+                  onRefresh: _getWeatherByLocation,
+                  color: AppColors.accent,
+                  backgroundColor: AppColors.surface,
+                  strokeWidth: 2.5,
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
                     ),
+                    slivers: [
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                          child: Column(
+                            children: [
+                              _buildLocationBar(),
+                              const SizedBox(height: 20),
+                              HeroWeatherCard(
+                                temperature: temperature,
+                                humidity: humidity,
+                                windSpeed: windSpeed,
+                                rainfall: rainfall,
+                                description: weatherDescription,
+                                language: widget.language,
+                              ),
+                              const SizedBox(height: 20),
+                              TodaysRecommendationsSection(
+                                temperature: temperature,
+                                humidity: humidity,
+                                windSpeed: windSpeed,
+                                language: widget.language,
+                              ),
+                              const SizedBox(height: 18),
+                              FarmingAlertsSection(
+                                temperature: temperature,
+                                humidity: humidity,
+                                windSpeed: windSpeed,
+                                forecastData: forecastList,
+                                language: widget.language,
+                              ),
+                              const SizedBox(height: 18),
+                              Forecast5DaySection(
+                                forecastData: forecastList,
+                                language: widget.language,
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.accentDeep, AppColors.accent],
+  Widget _buildLocationBar() {
+    return GestureDetector(
+      onTap: isRefreshing ? null : _getWeatherByLocation,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B5E20).withValues(alpha: 0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accent.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.location_on_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
-            child: const Icon(Icons.eco_rounded, color: Colors.white, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Govi Maga',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _t('your_location'),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                Text(
-                  _t('weather_advisory'),
-                  style: const TextStyle(
-                    color: Color(0xCCFFFFFF),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 2),
+                  Text(
+                    currentCity,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white30, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedBuilder(
+                    animation: _refreshController,
+                    builder: (context, child) {
+                      return Transform.rotate(
+                        angle: _refreshController.value * 2 * math.pi,
+                        child: child,
+                      );
+                    },
+                    child: const Icon(
+                      Icons.refresh_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isRefreshing ? _t('loading') : _t('tap_refresh'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: const Icon(
-              Icons.notifications_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -448,64 +510,6 @@ class _WeatherScreenState extends State<WeatherScreen>
                   colors: [AppColors.accentLight, AppColors.accentDark],
                 ),
                 borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildLocationPill() {
-    return GestureDetector(
-      onTap: _getWeatherByLocation,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: AppColors.accentBorder, width: 1.5),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.shadowGreen,
-              blurRadius: 16,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                gradient: const RadialGradient(
-                  colors: [AppColors.accentLight, AppColors.accent],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.5),
-                    blurRadius: 6,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 9),
-            const Icon(
-              Icons.location_on_rounded,
-              color: AppColors.accent,
-              size: 15,
-            ),
-            const SizedBox(width: 5),
-            Text(
-              currentCity,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
               ),
             ),
           ],
