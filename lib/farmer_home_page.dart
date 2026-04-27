@@ -157,7 +157,17 @@ class _FarmerHomePageState extends State<FarmerHomePage> {
       backgroundColor: const Color(0xFFF4F7F5),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1B5E20),
-        title: Text(t('app_title'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircleAvatar(
+              backgroundImage: AssetImage('assets/app_logo.jpeg'),
+              radius: 16,
+            ),
+            const SizedBox(width: 8),
+            Text(t('app_title'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+          ],
+        ),
         actions: [
           _langButton('EN', 'EN'),
           const VerticalDivider(color: Colors.white54, indent: 20, endIndent: 20),

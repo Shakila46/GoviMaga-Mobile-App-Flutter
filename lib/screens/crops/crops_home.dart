@@ -106,13 +106,19 @@ class _CropsHomeState extends State<CropsHome> {
       backgroundColor: const Color(0xFF1B5E20),
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
-        title: Text(
-          'My Farm',
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            SizedBox(width: 8),
+            Text(
+              'My Farm',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+          ],
         ),
         background: Stack(
           fit: StackFit.expand,
@@ -530,7 +536,17 @@ class _CropsHomeState extends State<CropsHome> {
   Widget _buildGuestMessage() {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Crops'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            CircleAvatar(
+              backgroundImage: AssetImage('assets/app_logo.jpeg'),
+              radius: 16,
+            ),
+            SizedBox(width: 8),
+            Text('My Crops'),
+          ],
+        ),
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
       ),

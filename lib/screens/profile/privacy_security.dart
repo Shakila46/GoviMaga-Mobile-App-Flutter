@@ -188,7 +188,17 @@ class _PrivacySecurityState extends State<PrivacySecurity> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_t('title')),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircleAvatar(
+              backgroundImage: AssetImage('assets/app_logo.jpeg'),
+              radius: 16,
+            ),
+            const SizedBox(width: 8),
+            Text(_t('title')),
+          ],
+        ),
         centerTitle: true,
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,

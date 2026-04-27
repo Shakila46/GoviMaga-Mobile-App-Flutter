@@ -106,7 +106,17 @@ class _ActivityLogState extends State<ActivityLog> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Activity Log"),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            CircleAvatar(
+              backgroundImage: AssetImage('assets/app_logo.jpeg'),
+              radius: 16,
+            ),
+            SizedBox(width: 8),
+            Text("Activity Log"),
+          ],
+        ),
         centerTitle: true,
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,

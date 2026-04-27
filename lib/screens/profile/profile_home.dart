@@ -47,7 +47,13 @@ class _ProfileHomeState extends State<ProfileHome> {
     //  Real-time user data stream
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Profile"),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            SizedBox(width: 8),
+            Text("My Profile"),
+          ],
+        ),
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
         actions: [
@@ -190,7 +196,17 @@ class _ProfileHomeState extends State<ProfileHome> {
   Widget _buildGuestProfile() {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Profile"),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            CircleAvatar(
+              backgroundImage: AssetImage('assets/app_logo.jpeg'),
+              radius: 16,
+            ),
+            SizedBox(width: 8),
+            Text("Profile"),
+          ],
+        ),
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
       ),

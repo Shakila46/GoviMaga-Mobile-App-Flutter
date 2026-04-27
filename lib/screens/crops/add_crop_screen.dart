@@ -120,7 +120,17 @@ class _AddCropScreenState extends State<AddCropScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.cropToEdit != null ? 'Edit Crop' : 'Add New Crop'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircleAvatar(
+              backgroundImage: AssetImage('assets/app_logo.jpeg'),
+              radius: 16,
+            ),
+            const SizedBox(width: 8),
+            Text(widget.cropToEdit != null ? 'Edit Crop' : 'Add New Crop'),
+          ],
+        ),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
